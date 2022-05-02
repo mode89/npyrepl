@@ -30,7 +30,6 @@ def run():
                     raise RuntimeError(f"Unknown request: {request}")
 
     with ThreadingTCPServer(("localhost", 0), RequestHandler) as server:
-
         port = server.socket.getsockname()[1]
         print(f"Server is running on port: {port}")
         prepl_port_path = Path(".prepl-port")
