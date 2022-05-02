@@ -1,3 +1,4 @@
+import ast
 from functools import reduce
 from pathlib import Path
 from socketserver import StreamRequestHandler, ThreadingTCPServer, TCPServer
@@ -41,7 +42,13 @@ def run():
 
 def evaluate(code):
     try:
-        return eval(code), None
+        parsed = ast.parse(code)
+        for statement in parsed.body:
+            if isinstance(statement, ast.Expr):
+                return eval(code), None
+            else:
+                exec(code)
+                return None, None
     except Exception as ex:
         return None, ex
 
