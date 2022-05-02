@@ -4,7 +4,7 @@ import socket
 from .encoding import read_packet, write_packet
 
 def read_port_file():
-    with open(".prepl-port", "r") as port_file:
+    with open(".npyrepl-port", "r") as port_file:
         return int(port_file.read())
 
 def read_command(prompt_prefix=""):

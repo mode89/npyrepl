@@ -54,13 +54,13 @@ def run():
     with ThreadingTCPServer(("localhost", 0), RequestHandler) as server:
         port = server.socket.getsockname()[1]
         print(f"Server is running on port: {port}")
-        prepl_port_path = Path(".prepl-port")
-        with prepl_port_path.open("w") as port_file:
+        npyrepl_port_path = Path(".npyrepl-port")
+        with npyrepl_port_path.open("w") as port_file:
             port_file.write(str(port))
         try:
             server.serve_forever()
         finally:
-            prepl_port_path.unlink()
+            npyrepl_port_path.unlink()
 
 def evaluate(code, namespace):
     try:
