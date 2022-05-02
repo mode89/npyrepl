@@ -1,3 +1,4 @@
+import re
 import socket
 
 from .encoding import read_packet, write_packet
@@ -6,10 +7,10 @@ def read_port_file():
     with open(".prepl-port", "r") as port_file:
         return int(port_file.read())
 
-def read_command():
+def read_command(prompt_prefix=""):
     lines = []
     while True:
-        prompt = "> " if not lines else ". "
+        prompt = prompt_prefix + ("> " if not lines else ". ")
         line = input(prompt).rstrip()
         if not line:
             if lines:
@@ -27,25 +28,39 @@ if __name__ == "__main__":
         wfile = sock.makefile("wb")
         rfile = sock.makefile("rb")
 
+        state = {
+            "ns": ""
+        }
+
+        def handle_command(packet, handle_response):
+            write_packet(wfile, packet)
+            wfile.flush()
+            response = read_packet(rfile)
+            ex = response.get("ex", None)
+            if ex is None:
+                handle_response(response)
+            else:
+                print(ex)
+
         while True:
             try:
-                command = read_command()
+                ns = state["ns"]
+                command = read_command("" if not ns else f"{ns} ")
             except EOFError:
                 break
+
             if command[0] == ":":
-                if command == ":exit":
+                if command.startswith(":ns"):
+                    def update_namespace(response):
+                        state["ns"] = response["ns"]
+                    handle_command(
+                        { "op": "ns", "expr": command[3:] },
+                        update_namespace)
+                elif command == ":exit":
                     break
                 else:
                     print(f"Unknown command {command}")
             else:
-                write_packet(wfile, {
-                    "op": "eval",
-                    "code": command,
-                })
-                wfile.flush()
-                result = read_packet(rfile)
-                ex = result.get("ex", None)
-                if ex is None:
-                    print(result["value"])
-                else:
-                    print(ex)
+                handle_command(
+                    { "op": "eval", "code": command },
+                    lambda response: print(response["value"]))
