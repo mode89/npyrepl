@@ -49,17 +49,21 @@ if __name__ == "__main__":
             except EOFError:
                 break
 
+            # Special commands
             if command[0] == ":":
+                # Change namespace
                 if command.startswith(":ns"):
                     def update_namespace(response):
                         state["ns"] = response["ns"]
                     handle_command(
                         { "op": "ns", "expr": command[3:] },
                         update_namespace)
+                # Exit the terminal client
                 elif command == ":exit":
                     break
                 else:
                     print(f"Unknown command {command}")
+            # Evaluate entered code
             else:
                 handle_command(
                     { "op": "eval", "code": command },
