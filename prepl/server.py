@@ -10,13 +10,14 @@ def run():
     class RequestHandler(StreamRequestHandler):
 
         def handle(self):
+            namespace = dict()
             while True:
                 request = read_packet(self.rfile)
                 if request is None:
                     break
 
                 if request["op"] == "eval":
-                    value, ex = evaluate(request["code"])
+                    value, ex = evaluate(request["code"], namespace)
                     if ex is None:
                         write_packet(self.wfile, {
                             "value": str(value),
@@ -40,14 +41,14 @@ def run():
         finally:
             prepl_port_path.unlink()
 
-def evaluate(code):
+def evaluate(code, namespace):
     try:
         parsed = ast.parse(code)
         for statement in parsed.body:
             if isinstance(statement, ast.Expr):
-                return eval(code), None
+                return eval(code, namespace), None
             else:
-                exec(code)
+                exec(code, namespace)
                 return None, None
     except Exception as ex:
         return None, ex
