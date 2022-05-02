@@ -28,15 +28,24 @@ if __name__ == "__main__":
         rfile = sock.makefile("rb")
 
         while True:
-            command = read_command()
-            write_packet(wfile, {
-                "op": "eval",
-                "code": command,
-            })
-            wfile.flush()
-            result = read_packet(rfile)
-            ex = result.get("ex", None)
-            if ex is None:
-                print(result["value"])
+            try:
+                command = read_command()
+            except EOFError:
+                break
+            if command[0] == ":":
+                if command == ":exit":
+                    break
+                else:
+                    print(f"Unknown command {command}")
             else:
-                print(ex)
+                write_packet(wfile, {
+                    "op": "eval",
+                    "code": command,
+                })
+                wfile.flush()
+                result = read_packet(rfile)
+                ex = result.get("ex", None)
+                if ex is None:
+                    print(result["value"])
+                else:
+                    print(ex)
