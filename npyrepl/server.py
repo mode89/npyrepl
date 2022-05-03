@@ -55,11 +55,11 @@ def run():
 def evaluate(code, namespace):
     try:
         parsed = ast.parse(code)
-        for statement in parsed.body:
-            if isinstance(statement, ast.Expr):
-                return eval(code, namespace), None
-            else:
-                exec(code, namespace)
-                return None, None
+        statements = parsed.body
+        if len(statements) == 1 and isinstance(statements[0], ast.Expr):
+            return eval(code, namespace), None
+        else:
+            exec(code, namespace)
+            return None, None
     except Exception as ex:
         return None, ex
