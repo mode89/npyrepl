@@ -74,10 +74,10 @@ def eval_lines():
             lambda response: _print(f"Result: {response.value}"))
     session.queue.put(command)
 
-def namespace(expr):
+def namespace(name):
     assert session.running
     def command():
-        _send_packet(SN(op="ns", expr=expr or ""),
+        _send_packet(SN(op="ns", name=name or ""),
             lambda response: _print(f"Current namespace: {response.ns}"))
     session.queue.put(command)
 

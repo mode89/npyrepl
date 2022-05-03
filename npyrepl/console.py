@@ -45,7 +45,7 @@ def run():
         def update_namespace(response):
             state.ns = response.ns
 
-        handle_command(SN(op="ns", expr=""), update_namespace)
+        handle_command(SN(op="ns", name=""), update_namespace)
 
         while True:
             try:
@@ -57,8 +57,9 @@ def run():
             if command[0] == ":":
                 # Change namespace
                 if command.startswith(":ns"):
+                    name = command[3:].strip()
                     handle_command(
-                        SN(op="ns", expr=command[3:]),
+                        SN(op="ns", name=name),
                         update_namespace)
                 # Exit the console
                 elif command == ":exit":

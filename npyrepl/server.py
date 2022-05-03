@@ -1,5 +1,6 @@
 import ast
 from functools import reduce
+from importlib import import_module
 from pathlib import Path
 from socketserver import StreamRequestHandler, ThreadingTCPServer, TCPServer
 from types import ModuleType
@@ -28,17 +29,13 @@ def run():
                     else:
                         write_packet(self.wfile, SN(ex=str(ex)))
                 elif request.op == "ns":
-                    expr = request.expr.strip()
                     try:
-                        if expr == "":
+                        if request.name == "":
                             pass
-                        elif expr == "__main__":
+                        elif request.name == "__main__":
                             namespace = main_namespace
                         else:
-                            new_namespace = eval(expr, vars(namespace))
-                            if not isinstance(new_namespace, ModuleType):
-                                raise TypeError("Must be a module")
-                            namespace = new_namespace
+                            namespace = import_module(request.name)
                         write_packet(self.wfile, SN(ns=namespace.__name__))
                     except Exception as ex:
                         write_packet(self.wfile, SN(ex=str(ex)))

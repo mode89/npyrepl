@@ -37,8 +37,8 @@ endfunction
 
 command! -range NpyreplEvalLines <line1>,<line2>call npyrepl#EvalLines()
 
-function! npyrepl#Namespace(expr=v:null)
-    python3 npyrepl_vim.namespace(vim.eval("a:expr"))
+function! npyrepl#Namespace(name=v:null)
+    python3 npyrepl_vim.namespace(vim.eval("a:name"))
 endfunction
 
 command! -nargs=* NpyreplNamespace call npyrepl#Namespace(<f-args>)
