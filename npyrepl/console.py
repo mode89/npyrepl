@@ -22,7 +22,7 @@ def read_command(prompt_prefix=""):
             break
     return "\n".join(lines)
 
-if __name__ == "__main__":
+def run():
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
         sock.connect(("localhost", read_port_file()))
         wfile = sock.makefile("wb")

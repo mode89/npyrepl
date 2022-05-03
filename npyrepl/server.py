@@ -73,6 +73,3 @@ def evaluate(code, namespace):
                 return None, None
     except Exception as ex:
         return None, ex
-
-if __name__ == "__main__":
-    run()

@@ -7,6 +7,11 @@ setuptools.setup(
     description="Python REPL",
     url="https://github.com/mode89/npyrepl",
     packages=setuptools.find_packages(),
+    entry_points={
+        "console_scripts": [
+            "npyrepl=npyrepl.cli:main",
+        ],
+    },
     license="MIT License",
     classifiers=[
         "Programming Language :: Python :: 3",
