@@ -1,5 +1,6 @@
 import re
 import socket
+from types import SimpleNamespace as SN
 
 from .encoding import read_packet, write_packet
 
@@ -28,26 +29,26 @@ def run():
         wfile = sock.makefile("wb")
         rfile = sock.makefile("rb")
 
-        state = {}
+        state = SN()
 
         def handle_command(packet, handle_response):
             write_packet(wfile, packet)
             wfile.flush()
             response = read_packet(rfile)
-            ex = response.get("ex", None)
+            ex = getattr(response, "ex", None)
             if ex is None:
                 handle_response(response)
             else:
                 print(f"Server exception: {ex}")
 
         def update_namespace(response):
-            state["ns"] = response["ns"]
+            state.ns = response.ns
 
-        handle_command({ "op": "ns", "expr": "" }, update_namespace)
+        handle_command(SN(op="ns", expr=""), update_namespace)
 
         while True:
             try:
-                command = read_command(f"{state['ns']} ")
+                command = read_command(f"{state.ns} ")
             except EOFError:
                 break
 
@@ -56,7 +57,7 @@ def run():
                 # Change namespace
                 if command.startswith(":ns"):
                     handle_command(
-                        { "op": "ns", "expr": command[3:] },
+                        SN(op="ns", expr=command[3:]),
                         update_namespace)
                 # Exit the console
                 elif command == ":exit":
@@ -66,5 +67,5 @@ def run():
             # Evaluate entered code
             else:
                 handle_command(
-                    { "op": "eval", "code": command },
-                    lambda response: print(response["value"]))
+                    SN(op="eval", code=command),
+                    lambda response: print(response.value))

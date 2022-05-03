@@ -1,5 +1,6 @@
 import json
 import struct
+from types import SimpleNamespace as SN
 
 def read_packet_size(f):
     data = str()
@@ -17,11 +18,11 @@ def read_packet(f):
     if size is not None:
         data_json = f.read(size).decode("utf-8")
         data = json.loads(data_json)
-        return data
+        return SN(**data)
     else:
         return None
 
 def write_packet(f, data):
-    data_json = json.dumps(data)
+    data_json = json.dumps(vars(data))
     size = len(data_json)
     f.write(f"{size}:{data_json}".encode("utf-8"))

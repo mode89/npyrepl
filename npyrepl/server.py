@@ -3,11 +3,12 @@ from functools import reduce
 from pathlib import Path
 from socketserver import StreamRequestHandler, ThreadingTCPServer, TCPServer
 from types import ModuleType
+from types import SimpleNamespace as SN
 
 from .encoding import read_packet, write_packet
 
 def run():
-    main_namespace = { "__name__": "__main__" }
+    main_namespace = SN(__name__="__main__")
 
     class RequestHandler(StreamRequestHandler):
 
@@ -18,32 +19,27 @@ def run():
                 if request is None:
                     break
 
-                if request["op"] == "eval":
-                    value, ex = evaluate(request["code"], namespace)
+                if request.op == "eval":
+                    value, ex = evaluate(request.code, vars(namespace))
                     if ex is None:
-                        write_packet(self.wfile, {
-                            "value": str(value),
-                        })
+                        write_packet(self.wfile, SN(value=str(value)))
                     else:
-                        write_packet(self.wfile, {
-                            "ex": str(ex),
-                        })
-                elif request["op"] == "ns":
-                    expr = request["expr"].strip()
+                        write_packet(self.wfile, SN(ex=str(ex)))
+                elif request.op == "ns":
+                    expr = request.expr.strip()
                     try:
                         if expr == "":
                             pass
                         elif expr == "__main__":
                             namespace = main_namespace
                         else:
-                            namespace_module = eval(expr, namespace)
-                            if not isinstance(namespace_module, ModuleType):
+                            new_namespace = eval(expr, vars(namespace))
+                            if not isinstance(new_namespace, ModuleType):
                                 raise TypeError("Must be a module")
-                            namespace = vars(namespace_module)
-                        write_packet(self.wfile,
-                            { "ns": namespace["__name__"] })
+                            namespace = new_namespace
+                        write_packet(self.wfile, SN(ns=namespace.__name__))
                     except Exception as ex:
-                        write_packet(self.wfile, { "ex": str(ex) })
+                        write_packet(self.wfile, SN(ex=str(ex)))
                 else:
                     raise RuntimeError(f"Unknown request: {request}")
 
