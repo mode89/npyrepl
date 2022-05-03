@@ -58,7 +58,7 @@ if __name__ == "__main__":
                     handle_command(
                         { "op": "ns", "expr": command[3:] },
                         update_namespace)
-                # Exit the terminal client
+                # Exit the console
                 elif command == ":exit":
                     break
                 else:
