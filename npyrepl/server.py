@@ -7,12 +7,12 @@ from types import ModuleType
 from .encoding import read_packet, write_packet
 
 def run():
-    default_namespace = dict()
+    main_namespace = { "__name__": "__main__" }
 
     class RequestHandler(StreamRequestHandler):
 
         def handle(self):
-            namespace = default_namespace
+            namespace = main_namespace
             while True:
                 request = read_packet(self.rfile)
                 if request is None:
@@ -29,25 +29,21 @@ def run():
                             "ex": str(ex),
                         })
                 elif request["op"] == "ns":
-                    expr = request["expr"]
-                    if expr == "":
-                        namespace = default_namespace
-                        write_packet(self.wfile, {
-                            "ns": "",
-                        })
-                    else:
-                        try:
+                    expr = request["expr"].strip()
+                    try:
+                        if expr == "":
+                            pass
+                        elif expr == "__main__":
+                            namespace = main_namespace
+                        else:
                             namespace_module = eval(expr, namespace)
                             if not isinstance(namespace_module, ModuleType):
                                 raise TypeError("Must be a module")
                             namespace = vars(namespace_module)
-                            write_packet(self.wfile, {
-                                "ns": str(namespace_module.__name__),
-                            })
-                        except Exception as ex:
-                            write_packet(self.wfile, {
-                                "ex": str(ex),
-                            })
+                        write_packet(self.wfile,
+                            { "ns": namespace["__name__"] })
+                    except Exception as ex:
+                        write_packet(self.wfile, { "ex": str(ex) })
                 else:
                     raise RuntimeError(f"Unknown request: {request}")
 

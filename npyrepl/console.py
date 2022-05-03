@@ -28,9 +28,7 @@ def run():
         wfile = sock.makefile("wb")
         rfile = sock.makefile("rb")
 
-        state = {
-            "ns": ""
-        }
+        state = {}
 
         def handle_command(packet, handle_response):
             write_packet(wfile, packet)
@@ -40,12 +38,16 @@ def run():
             if ex is None:
                 handle_response(response)
             else:
-                print(ex)
+                print(f"Server exception: {ex}")
+
+        def update_namespace(response):
+            state["ns"] = response["ns"]
+
+        handle_command({ "op": "ns", "expr": "" }, update_namespace)
 
         while True:
             try:
-                ns = state["ns"]
-                command = read_command("" if not ns else f"{ns} ")
+                command = read_command(f"{state['ns']} ")
             except EOFError:
                 break
 
@@ -53,8 +55,6 @@ def run():
             if command[0] == ":":
                 # Change namespace
                 if command.startswith(":ns"):
-                    def update_namespace(response):
-                        state["ns"] = response["ns"]
                     handle_command(
                         { "op": "ns", "expr": command[3:] },
                         update_namespace)
