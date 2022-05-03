@@ -7,6 +7,8 @@ from types import SimpleNamespace as SN
 
 from .encoding import read_packet, write_packet
 
+PORT_FILE_PATH = Path(".npyrepl-port")
+
 def run():
     main_namespace = SN(__name__="__main__")
 
@@ -46,13 +48,12 @@ def run():
     with ThreadingTCPServer(("localhost", 0), RequestHandler) as server:
         port = server.socket.getsockname()[1]
         print(f"Server is running on port: {port}")
-        npyrepl_port_path = Path(".npyrepl-port")
-        with npyrepl_port_path.open("w") as port_file:
+        with PORT_FILE_PATH.open("w") as port_file:
             port_file.write(str(port))
         try:
             server.serve_forever()
         finally:
-            npyrepl_port_path.unlink()
+            PORT_FILE_PATH.unlink()
 
 def evaluate(code, namespace):
     try:

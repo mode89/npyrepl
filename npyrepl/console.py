@@ -3,9 +3,10 @@ import socket
 from types import SimpleNamespace as SN
 
 from .encoding import read_packet, write_packet
+from .server import PORT_FILE_PATH
 
 def read_port_file():
-    with open(".npyrepl-port", "r") as port_file:
+    with PORT_FILE_PATH.open("r") as port_file:
         return int(port_file.read())
 
 def read_command(prompt_prefix=""):

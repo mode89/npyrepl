@@ -7,6 +7,7 @@ import vim
 
 try:
     from npyrepl.encoding import write_packet, read_packet
+    from npyrepl.server import PORT_FILE_PATH
 except:
     pass
 
@@ -37,7 +38,7 @@ def session_loop():
         sock.close()
 
 def read_port_file():
-    with open(".npyrepl-port", "r") as port_file:
+    with PORT_FILE_PATH.open("r") as port_file:
         return int(port_file.read())
 
 def connect():
