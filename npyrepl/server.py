@@ -12,10 +12,15 @@ PORT_FILE_PATH = Path(".npyrepl-port")
 
 def run():
     main_namespace = SN(__name__="__main__")
+    server_state = SN(client_counter=0)
 
     class RequestHandler(StreamRequestHandler):
 
         def handle(self):
+            server_state.client_counter += 1
+            print("New client connected. Number of connected clients: "
+                f"{server_state.client_counter}")
+
             namespace = main_namespace
             while True:
                 request = read_packet(self.rfile)
@@ -38,6 +43,10 @@ def run():
                         raise RuntimeError(f"Unknown request: {request}")
                 except Exception as ex:
                     write_packet(self.wfile, SN(ex=str(ex)))
+
+            server_state.client_counter -= 1
+            print("Client disconnected. Number of connected clients: "
+                f"{server_state.client_counter}")
 
     with ThreadingTCPServer(("localhost", 0), RequestHandler) as server:
         port = server.socket.getsockname()[1]
