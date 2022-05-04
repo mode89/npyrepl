@@ -10,59 +10,76 @@ from .encoding import read_packet, write_packet
 
 PORT_FILE_PATH = Path(".npyrepl-port")
 
+_op_handlers = {}
+
 def run():
-    main_namespace = SN(__name__="__main__")
-    server_state = SN(client_counter=0)
+    server = SN(
+        main_namespace=SN(__name__="__main__"),
+        client_counter=0,
+    )
 
     class RequestHandler(StreamRequestHandler):
 
         def handle(self):
-            server_state.client_counter += 1
+            server.client_counter += 1
             print("New client connected. Number of connected clients: "
-                f"{server_state.client_counter}")
+                f"{server.client_counter}")
 
-            namespace = main_namespace
+            client = SN(
+                namespace=server.main_namespace,
+            )
+
             while True:
                 request = read_packet(self.rfile)
                 if request is None:
                     break
 
                 try:
-                    if request.op == "eval":
-                        value = _evaluate(request.code, vars(namespace))
-                        write_packet(self.wfile, SN(value=str(value)))
-                    elif request.op == "ns":
-                        if request.name == "":
-                            pass
-                        elif request.name == "__main__":
-                            namespace = main_namespace
-                        else:
-                            namespace = import_module(request.name)
-                        write_packet(self.wfile, SN(ns=namespace.__name__))
-                    else:
-                        raise RuntimeError(f"Unknown request: {request}")
+                    op_handler_ = _op_handlers[request.op]
+                    response = op_handler_(server, client, request)
                 except Exception as ex:
-                    write_packet(self.wfile, SN(ex=str(ex)))
+                    response = SN(ex=str(ex))
+                write_packet(self.wfile, response)
 
-            server_state.client_counter -= 1
+            server.client_counter -= 1
             print("Client disconnected. Number of connected clients: "
-                f"{server_state.client_counter}")
+                f"{server.client_counter}")
 
-    with ThreadingTCPServer(("localhost", 0), RequestHandler) as server:
-        port = server.socket.getsockname()[1]
+    with ThreadingTCPServer(("localhost", 0), RequestHandler) as tcp_server:
+        port = tcp_server.socket.getsockname()[1]
         print(f"Server is running on port: {port}")
         with PORT_FILE_PATH.open("w") as port_file:
             port_file.write(str(port))
         try:
-            server.serve_forever()
+            tcp_server.serve_forever()
         finally:
             PORT_FILE_PATH.unlink()
 
-def _evaluate(code, namespace):
+def op_handler(op):
+    def wrapper(f):
+        _op_handlers[op] = f
+        return f
+    return wrapper
+
+@op_handler("eval")
+def _evaluate(server, client, request):
+    namespace = vars(client.namespace)
+    code = request.code
     parsed = ast.parse(code)
     statements = parsed.body
     if len(statements) == 1 and isinstance(statements[0], ast.Expr):
-        return eval(code, namespace)
+        result = eval(code, namespace)
     else:
         exec(code, namespace)
-        return None
+        result = None
+    return SN(value=str(result))
+
+@op_handler("ns")
+def _namespace(server, client, request):
+    if request.name == "":
+        pass
+    elif request.name == "__main__":
+        client.namespace = server.main_namespace
+    else:
+        client.namespace = import_module(request.name)
+    return SN(ns=client.namespace.__name__)
