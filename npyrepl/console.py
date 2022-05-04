@@ -1,5 +1,6 @@
 import re
 import socket
+import readline
 from textwrap import indent
 from types import SimpleNamespace as SN
 
