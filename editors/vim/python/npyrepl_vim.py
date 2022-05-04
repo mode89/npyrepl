@@ -71,6 +71,9 @@ def eval_lines():
     lines = "\n".join(vim.current.buffer[rng.start:rng.end+1])
     eval_code(lines)
 
+def eval_buffer():
+    eval_code("\n".join(vim.current.buffer))
+
 def namespace(name):
     assert session.running
     def command():

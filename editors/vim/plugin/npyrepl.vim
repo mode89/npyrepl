@@ -37,6 +37,8 @@ endfunction
 
 command! -range NpyreplEvalLines <line1>,<line2>call npyrepl#EvalLines()
 
+command! NpyreplEvalBuffer python3 npyrepl_vim.eval_buffer()
+
 function! npyrepl#Namespace(name=v:null)
     python3 npyrepl_vim.namespace(vim.eval("a:name"))
 endfunction
