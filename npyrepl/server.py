@@ -19,31 +19,8 @@ def run():
     )
 
     class RequestHandler(StreamRequestHandler):
-
         def handle(self):
-            server.client_counter += 1
-            print("New client connected. Number of connected clients: "
-                f"{server.client_counter}")
-
-            client = SN(
-                namespace=server.main_namespace,
-            )
-
-            while True:
-                request = read_packet(self.rfile)
-                if request is None:
-                    break
-
-                try:
-                    op_handler_ = _op_handlers[request.op]
-                    response = op_handler_(server, client, request)
-                except Exception as ex:
-                    response = SN(ex=str(ex))
-                write_packet(self.wfile, response)
-
-            server.client_counter -= 1
-            print("Client disconnected. Number of connected clients: "
-                f"{server.client_counter}")
+            client_handler(server, self.rfile, self.wfile)
 
     with ThreadingTCPServer(("localhost", 0), RequestHandler) as tcp_server:
         port = tcp_server.socket.getsockname()[1]
@@ -54,6 +31,31 @@ def run():
             tcp_server.serve_forever()
         finally:
             PORT_FILE_PATH.unlink()
+
+def client_handler(server, rsock, wsock):
+    server.client_counter += 1
+    print("New client connected. Number of connected clients: "
+        f"{server.client_counter}")
+
+    client = SN(
+        namespace=server.main_namespace,
+    )
+
+    while True:
+        request = read_packet(rsock)
+        if request is None:
+            break
+
+        try:
+            op_handler_ = _op_handlers[request.op]
+            response = op_handler_(server, client, request)
+        except Exception as ex:
+            response = SN(ex=str(ex))
+        write_packet(wsock, response)
+
+    server.client_counter -= 1
+    print("Client disconnected. Number of connected clients: "
+        f"{server.client_counter}")
 
 def op_handler(op):
     def wrapper(f):
