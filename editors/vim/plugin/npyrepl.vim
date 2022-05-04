@@ -21,7 +21,7 @@ EOF
 
 let g:npyrepl_plugin_loaded = 1
 
-command! -nargs=0 NpyreplConnect python3 npyrepl_vim.connect()
+command! -nargs=* NpyreplConnect python3 npyrepl_vim.connect(<f-args>)
 command! -nargs=0 NpyreplDisconnect python3 npyrepl_vim.disconnect()
 
 function! npyrepl#Eval(expr)

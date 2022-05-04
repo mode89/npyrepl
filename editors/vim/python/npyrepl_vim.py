@@ -19,13 +19,24 @@ def read_port_file():
     with PORT_FILE_PATH.open("r") as port_file:
         return int(port_file.read())
 
-def connect():
+def connect(*args):
     if session.sock:
         _print("Already connected")
         return
+    if len(args) == 0:
+        address = "localhost"
+        port = read_port_file()
+    elif len(args) == 1:
+        address = "localhost"
+        port = int(args[0])
+    elif len(args) == 2:
+        address = args[0]
+        port = int(args[1])
+    else:
+        _print("NpyreplConnect expects no more than two arguments")
+        return
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    port = read_port_file()
     sock.connect(("localhost", port))
     _print(f"Connected to localhost:{port}")
 

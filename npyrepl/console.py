@@ -5,11 +5,6 @@ from textwrap import indent
 from types import SimpleNamespace as SN
 
 from .encoding import read_packet, write_packet
-from .server import PORT_FILE_PATH
-
-def read_port_file():
-    with PORT_FILE_PATH.open("r") as port_file:
-        return int(port_file.read())
 
 def read_command(prompt_prefix=""):
     lines = []
@@ -26,9 +21,11 @@ def read_command(prompt_prefix=""):
             break
     return "\n".join(lines)
 
-def run():
+def run(address, port):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-        sock.connect(("localhost", read_port_file()))
+        sock.connect((address, port))
+        print(f"Connected to {address}:{port}")
+
         wfile = sock.makefile("wb")
         rfile = sock.makefile("rb")
 

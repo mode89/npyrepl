@@ -13,7 +13,7 @@ PORT_FILE_PATH = Path(".npyrepl-port")
 
 _op_handlers = {}
 
-def run():
+def run(address, port):
     server = SN(
         main_namespace=SN(__name__="__main__"),
         client_counter=0,
@@ -23,9 +23,9 @@ def run():
         def handle(self):
             client_handler(server, self.rfile, self.wfile)
 
-    with ThreadingTCPServer(("localhost", 0), RequestHandler) as tcp_server:
+    with ThreadingTCPServer((address, port), RequestHandler) as tcp_server:
         port = tcp_server.socket.getsockname()[1]
-        print(f"Server is running on port: {port}")
+        print(f"Server is running on {address}:{port}")
         with PORT_FILE_PATH.open("w") as port_file:
             port_file.write(str(port))
         try:
