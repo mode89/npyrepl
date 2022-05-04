@@ -1,8 +1,6 @@
-from queue import Queue
 import re
 import socket
 from textwrap import indent
-from threading import Thread
 from types import SimpleNamespace as SN
 
 import vim
@@ -14,58 +12,38 @@ except:
     pass
 
 session = SN(
-    queue=Queue(),
-    running=False,
+    sock=None,
 )
-
-def session_loop():
-    try:
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        port = read_port_file()
-        sock.connect(("localhost", port))
-        _print(f"Connected to localhost:{port}")
-
-        session.wsock = sock.makefile("wb")
-        session.rsock = sock.makefile("rb")
-
-        session.running = True
-        while session.running:
-            command = session.queue.get()
-            try:
-                command()
-            except Exception as ex:
-                _print(ex)
-    finally:
-        sock.shutdown(socket.SHUT_RDWR)
-        sock.close()
 
 def read_port_file():
     with PORT_FILE_PATH.open("r") as port_file:
         return int(port_file.read())
 
 def connect():
-    if session.running:
+    if session.sock:
         _print("Already connected")
         return
 
-    thread = Thread(target=session_loop)
-    thread.daemon = True
-    thread.start()
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    port = read_port_file()
+    sock.connect(("localhost", port))
+    _print(f"Connected to localhost:{port}")
+
+    session.sock = sock
+    session.wsock = sock.makefile("wb")
+    session.rsock = sock.makefile("rb")
 
 def disconnect():
-    if session.running:
-        def command():
-            session.running = False
-        session.queue.put(command)
+    if session.sock:
+        session.sock.shutdown(socket.SHUT_RDWR)
+        session.sock.close()
+        session.sock = None
     else:
         _print("Not connected")
 
 def eval_code(code):
-    assert session.running
-    def command():
-        _send_packet(SN(op="eval", code=code),
-            lambda response: _print(f"Result: {response.value}"))
-    session.queue.put(command)
+    _send_packet(SN(op="eval", code=code),
+        lambda response: _print(f"Result: {response.value}"))
 
 def eval_lines():
     rng = vim.current.range
@@ -84,11 +62,8 @@ def eval_global_function():
         _print("Failed to extract function code")
 
 def namespace(name):
-    assert session.running
-    def command():
-        _send_packet(SN(op="ns", name=name or ""),
-            lambda response: _print(f"Current namespace: {response.ns}"))
-    session.queue.put(command)
+    _send_packet(SN(op="ns", name=name or ""),
+        lambda response: _print(f"Current namespace: {response.ns}"))
 
 def _extract_global_function(buffer, row):
     is_global_statement = lambda line: not re.match(r"$|\s|#", line)
@@ -117,6 +92,7 @@ def _extract_global_function(buffer, row):
     return None
 
 def _send_packet(packet, handle_response):
+    assert session.sock, "Not connected to server"
     write_packet(session.wsock, packet)
     session.wsock.flush()
     response = read_packet(session.rsock)
