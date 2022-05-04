@@ -59,21 +59,17 @@ def disconnect():
     else:
         _print("Not connected")
 
-def eval(expr):
+def eval_code(code):
     assert session.running
     def command():
-        _send_packet(SN(op="eval", code=expr),
+        _send_packet(SN(op="eval", code=code),
             lambda response: _print(f"Result: {response.value}"))
     session.queue.put(command)
 
 def eval_lines():
-    assert session.running
     rng = vim.current.range
     lines = "\n".join(vim.current.buffer[rng.start:rng.end+1])
-    def command():
-        _send_packet(SN(op="eval", code=lines),
-            lambda response: _print(f"Result: {response.value}"))
-    session.queue.put(command)
+    eval_code(lines)
 
 def namespace(name):
     assert session.running

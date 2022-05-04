@@ -25,7 +25,7 @@ command! -nargs=0 NpyreplConnect python3 npyrepl_vim.connect()
 command! -nargs=0 NpyreplDisconnect python3 npyrepl_vim.disconnect()
 
 function! npyrepl#Eval(expr)
-    python3 npyrepl_vim.eval(vim.eval("a:expr"))
+    python3 npyrepl_vim.eval_code(vim.eval("a:expr"))
 endfunction
 
 command! -nargs=1 NpyreplEval call npyrepl#Eval(<q-args>)
