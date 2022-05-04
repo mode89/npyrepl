@@ -1,5 +1,6 @@
 from queue import Queue
 import socket
+from textwrap import indent
 from threading import Thread
 from types import SimpleNamespace as SN
 
@@ -89,7 +90,9 @@ def _send_packet(packet, handle_response):
     if ex is None:
         handle_response(response)
     else:
-        _print(ex)
+        _print(f"Server exception:\n{indent(ex.strip(), '  ')}")
 
 def _print(msg):
-    vim.command(f"echomsg \"{msg}\"")
+    for line in msg.split("\n"):
+        line_ = line.replace("\"", "\\\"")
+        vim.command(f"echomsg \"{line_}\"")

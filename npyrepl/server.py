@@ -3,6 +3,7 @@ from functools import reduce
 from importlib import import_module
 from pathlib import Path
 from socketserver import StreamRequestHandler, ThreadingTCPServer, TCPServer
+from traceback import format_exc
 from types import ModuleType
 from types import SimpleNamespace as SN
 
@@ -49,8 +50,8 @@ def client_handler(server, rsock, wsock):
         try:
             op_handler_ = _op_handlers[request.op]
             response = op_handler_(server, client, request)
-        except Exception as ex:
-            response = SN(ex=str(ex))
+        except:
+            response = SN(ex=format_exc())
         write_packet(wsock, response)
 
     server.client_counter -= 1

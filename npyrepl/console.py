@@ -1,5 +1,6 @@
 import re
 import socket
+from textwrap import indent
 from types import SimpleNamespace as SN
 
 from .encoding import read_packet, write_packet
@@ -40,7 +41,7 @@ def run():
             if ex is None:
                 handle_response(response)
             else:
-                print(f"Server exception: {ex}")
+                print(f"Server exception:\n{indent(ex.strip(), '  ')}")
 
         def update_namespace(response):
             state.ns = response.ns
