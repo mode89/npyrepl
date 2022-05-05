@@ -1,10 +1,13 @@
+from pathlib import Path
 import re
-import socket
 import readline
+import socket
 from textwrap import indent
 from types import SimpleNamespace as SN
 
 from .encoding import read_packet, write_packet
+
+HIST_FILE = Path.home() / ".npyrepl_history"
 
 def read_command(prompt_prefix=""):
     lines = []
@@ -46,27 +49,33 @@ def run(address, port):
 
         handle_command(SN(op="ns", name=""), update_namespace)
 
-        while True:
-            try:
-                command = read_command(f"{state.ns} ")
-            except EOFError:
-                break
-
-            # Special commands
-            if command[0] == ":":
-                # Change namespace
-                if command.startswith(":ns"):
-                    name = command[3:].strip()
-                    handle_command(
-                        SN(op="ns", name=name),
-                        update_namespace)
-                # Exit the console
-                elif command == ":exit":
+        try:
+            if not HIST_FILE.exists():
+                HIST_FILE.touch()
+            readline.read_history_file(HIST_FILE)
+            while True:
+                try:
+                    command = read_command(f"{state.ns} ")
+                except EOFError:
                     break
+
+                # Special commands
+                if command[0] == ":":
+                    # Change namespace
+                    if command.startswith(":ns"):
+                        name = command[3:].strip()
+                        handle_command(
+                            SN(op="ns", name=name),
+                            update_namespace)
+                    # Exit the console
+                    elif command == ":exit":
+                        break
+                    else:
+                        print(f"Unknown command {command}")
+                # Evaluate entered code
                 else:
-                    print(f"Unknown command {command}")
-            # Evaluate entered code
-            else:
-                handle_command(
-                    SN(op="eval", code=command),
-                    lambda response: print(response.value))
+                    handle_command(
+                        SN(op="eval", code=command),
+                        lambda response: print(response.value))
+        finally:
+            readline.write_history_file(HIST_FILE)
