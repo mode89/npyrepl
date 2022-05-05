@@ -24,7 +24,7 @@ def read_command(prompt_prefix=""):
 def run(address, port):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
         sock.connect((address, port))
-        print(f"Connected to {address}:{port}")
+        print(f"Console connected to {address}:{port}")
 
         wfile = sock.makefile("wb")
         rfile = sock.makefile("rb")

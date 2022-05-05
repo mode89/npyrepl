@@ -1,4 +1,5 @@
 import ast
+from contextlib import contextmanager
 from functools import reduce
 from importlib import import_module
 from pathlib import Path
@@ -13,23 +14,27 @@ PORT_FILE_PATH = Path(".npyrepl-port")
 
 _op_handlers = {}
 
-def run(address, port):
-    server = SN(
+@contextmanager
+def start(address, port):
+    srv = SN(
         main_namespace=SN(__name__="__main__"),
         client_counter=0,
     )
 
     class RequestHandler(StreamRequestHandler):
         def handle(self):
-            client_handler(server, self.rfile, self.wfile)
+            client_handler(srv, self.rfile, self.wfile)
 
     with ThreadingTCPServer((address, port), RequestHandler) as tcp_server:
-        port = tcp_server.socket.getsockname()[1]
-        print(f"Server is running on {address}:{port}")
+        srv.tcp_server = tcp_server
+        srv.port = tcp_server.socket.getsockname()[1]
+        srv.serve = lambda: tcp_server.serve_forever()
+        srv.shutdown = lambda: tcp_server.shutdown()
+        print(f"Server is running on {address}:{srv.port}")
         with PORT_FILE_PATH.open("w") as port_file:
-            port_file.write(str(port))
+            port_file.write(str(srv.port))
         try:
-            tcp_server.serve_forever()
+            yield srv
         finally:
             PORT_FILE_PATH.unlink()
 
