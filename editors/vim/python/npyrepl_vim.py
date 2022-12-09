@@ -8,8 +8,9 @@ import vim
 try:
     from npyrepl.encoding import write_packet, read_packet
     from npyrepl.server import PORT_FILE_PATH
+    NPYREPL_FOUND = True
 except:
-    pass
+    NPYREPL_FOUND = False
 
 session = SN(
     sock=None,
@@ -20,6 +21,9 @@ def read_port_file():
         return int(port_file.read())
 
 def connect(*args):
+    if not NPYREPL_FOUND:
+        raise RuntimeError("npyrepl python module wasn't found")
+
     if len(args) == 0:
         address = "localhost"
         port = read_port_file()
