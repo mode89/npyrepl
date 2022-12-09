@@ -1,3 +1,4 @@
+import ast
 import re
 import socket
 from textwrap import indent
@@ -72,38 +73,25 @@ def eval_buffer():
     eval_code("\n".join(vim.current.buffer))
 
 def eval_global_statement():
-    row = vim.current.window.cursor[0] - 1
+    row = vim.current.window.cursor[0]
     statement_code = _extract_global_statement(vim.current.buffer, row)
     if statement_code is not None:
         eval_code(statement_code)
     else:
-        _print("Failed to extract statement's code")
+        _print("No global statement selected")
 
 def namespace(name):
     _send_packet(SN(op="ns", name=name or ""),
         lambda response: _print(f"Current namespace: {response.ns}"))
 
 def _extract_global_statement(buffer, row):
-    is_global_statement = lambda line: not re.match(r"$|\s|#", line)
-
-    def find_beginning():
-        for line_idx in range(row, -1, -1):
-            line = buffer[line_idx]
-            if is_global_statement(line):
-                return line_idx
-        return None
-
-    def find_ending():
-        for line_idx in range(row + 1, len(buffer)):
-            line = buffer[line_idx]
-            if is_global_statement(line):
-                return line_idx
-        return len(buffer)
-
-    beginning = find_beginning()
-    ending = find_ending()
-    if beginning is not None:
-        return "\n".join(buffer[beginning:ending]).strip()
+    buffer_str = "\n".join(buffer[:])
+    module = ast.parse(buffer_str)
+    for node in ast.iter_child_nodes(module):
+        first_line = node.lineno
+        last_line = node.end_lineno
+        if row >= first_line and row <= last_line:
+            return "\n".join(buffer[first_line-1:last_line])
     return None
 
 def _send_packet(packet, handle_response):
