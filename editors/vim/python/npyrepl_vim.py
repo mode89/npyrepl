@@ -20,9 +20,6 @@ def read_port_file():
         return int(port_file.read())
 
 def connect(*args):
-    if session.sock:
-        _print("Already connected")
-        return
     if len(args) == 0:
         address = "localhost"
         port = read_port_file()
@@ -35,6 +32,12 @@ def connect(*args):
     else:
         _print("NpyreplConnect expects no more than two arguments")
         return
+
+    if session.sock:
+        _print("Closing existing connection ...")
+        session.sock.shutdown(socket.SHUT_RDWR)
+        session.sock.close()
+        session.sock = None
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.connect(("localhost", port))
