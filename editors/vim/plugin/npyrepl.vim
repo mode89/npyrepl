@@ -23,25 +23,21 @@ let g:npyrepl_plugin_loaded = 1
 
 command! -nargs=* NpyreplConnect python3 npyrepl_vim.connect(<f-args>)
 command! -nargs=0 NpyreplDisconnect python3 npyrepl_vim.disconnect()
+command! -nargs=1 NpyreplEval call npyrepl#Eval(<q-args>)
+command! -range NpyreplEvalLines <line1>,<line2>call npyrepl#EvalLines()
+command! NpyreplEvalBuffer python3 npyrepl_vim.eval_buffer()
+command! NpyreplEvalGlobalFunction python3 npyrepl_vim.eval_global_function()
+command! -nargs=* NpyreplNamespace call npyrepl#Namespace(<f-args>)
 
 function! npyrepl#Eval(expr)
     python3 npyrepl_vim.eval_code(vim.eval("a:expr"))
 endfunction
-
-command! -nargs=1 NpyreplEval call npyrepl#Eval(<q-args>)
 
 function! npyrepl#EvalLines() range
     execute a:firstline . "," . a:lastline .
         \ "python3 npyrepl_vim.eval_lines()"
 endfunction
 
-command! -range NpyreplEvalLines <line1>,<line2>call npyrepl#EvalLines()
-
-command! NpyreplEvalBuffer python3 npyrepl_vim.eval_buffer()
-command! NpyreplEvalGlobalFunction python3 npyrepl_vim.eval_global_function()
-
 function! npyrepl#Namespace(name=v:null)
     python3 npyrepl_vim.namespace(vim.eval("a:name"))
 endfunction
-
-command! -nargs=* NpyreplNamespace call npyrepl#Namespace(<f-args>)
