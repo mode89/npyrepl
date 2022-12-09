@@ -71,29 +71,26 @@ def eval_lines():
 def eval_buffer():
     eval_code("\n".join(vim.current.buffer))
 
-def eval_global_function():
+def eval_global_statement():
     row = vim.current.window.cursor[0] - 1
-    function_code = _extract_global_function(vim.current.buffer, row)
-    if function_code is not None:
-        eval_code(function_code)
+    statement_code = _extract_global_statement(vim.current.buffer, row)
+    if statement_code is not None:
+        eval_code(statement_code)
     else:
-        _print("Failed to extract function code")
+        _print("Failed to extract statement's code")
 
 def namespace(name):
     _send_packet(SN(op="ns", name=name or ""),
         lambda response: _print(f"Current namespace: {response.ns}"))
 
-def _extract_global_function(buffer, row):
+def _extract_global_statement(buffer, row):
     is_global_statement = lambda line: not re.match(r"$|\s|#", line)
 
     def find_beginning():
         for line_idx in range(row, -1, -1):
             line = buffer[line_idx]
             if is_global_statement(line):
-                if re.match("def ", line):
-                    return line_idx
-                else:
-                    return None
+                return line_idx
         return None
 
     def find_ending():

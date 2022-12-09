@@ -26,7 +26,7 @@ command! -nargs=0 NpyreplDisconnect python3 npyrepl_vim.disconnect()
 command! -nargs=1 NpyreplEval call npyrepl#Eval(<q-args>)
 command! -range NpyreplEvalLines <line1>,<line2>call npyrepl#EvalLines()
 command! NpyreplEvalBuffer python3 npyrepl_vim.eval_buffer()
-command! NpyreplEvalGlobalFunction python3 npyrepl_vim.eval_global_function()
+command! NpyreplEvalGlobalStatement python3 npyrepl_vim.eval_global_statement()
 command! -nargs=* NpyreplNamespace call npyrepl#Namespace(<f-args>)
 
 function! npyrepl#Eval(expr)
